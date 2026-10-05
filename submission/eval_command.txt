@@ -1,0 +1,59 @@
+# 실습 과제 1 평가 명령어 (평가 안내 준수: play_one_episode.py, --seed 24, --num_envs 100, 원본 Isaac-Ant-v0 보상 기준 출력)
+# 환경: conda lerobot-arena, IsaacLab_RS (IsaacLab 2.3.0), Isaac Sim 5.1.0
+# 태스크 코드: source/isaaclab_tasks/isaaclab_tasks/manager_based/classic/ant_rough/
+# 제출 체크포인트: logs/rsl_rl/ant_rough/2026-10-05_15-55-59_fin_smooth/model_999.pt
+#   (복사본: ant_assignment/real_final_new/checkpoint/)
+#
+# 학습 설정: 원본과 동일 (1000 iteration, 4096 envs, PPO 하이퍼파라미터·네트워크 400-200-100 ELU 그대로)
+# 정책 입출력: 관측 = 원본 60차원 + 높이 스캔 54차원, 3 step 히스토리 → 342차원 / 행동 8차원 (토크, scale 7.5, 원본과 동일)
+# 학습 보상 = 원본 7항 + 걸음새 벌점 4항(수직 속도, 몸통 회전, 행동 변화율, 관절 가속도).
+# 평가 태스크는 원본 보상 7항만 사용하므로 출력되는 mean/std는 원본 보상 기준입니다. play_one_episode.py는 수정하지 않았습니다.
+# 센서(레이캐스터)가 환경 설정에 포함되어 있으므로 반드시 아래 태스크 이름으로 실행해야 합니다.
+
+conda activate lerobot-arena
+cd ~/IsaacLab_RS
+
+# 1) 처음 보는 어려운 지형 (held-out B: 레일, 별 바, 2단 단차, 역피라미드 계단, 초강 요철, 높은 장애물)
+./isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/play_one_episode.py \
+    --task Isaac-Ant-Final-Eval-v0 \
+    --seed 24 \
+    --num_envs 100 \
+    --checkpoint logs/rsl_rl/ant_rough/2026-10-05_15-55-59_fin_smooth/model_999.pt
+
+# 2) 처음 보는 장애물 코스 (held-out C: 높은 상자·원뿔 회피, 큰 파형, 급경사)
+./isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/play_one_episode.py \
+    --task Isaac-Ant-Final-Obstacles-v0 \
+    --seed 24 \
+    --num_envs 100 \
+    --checkpoint logs/rsl_rl/ant_rough/2026-10-05_15-55-59_fin_smooth/model_999.pt
+
+# 3) 원본 평지 환경
+./isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/play_one_episode.py \
+    --task Isaac-Ant-Final-Flat-v0 \
+    --seed 24 \
+    --num_envs 100 \
+    --checkpoint logs/rsl_rl/ant_rough/2026-10-05_15-55-59_fin_smooth/model_999.pt
+
+# 4) 한 에피소드 실행 + 화면 녹화
+./isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/play_one_episode.py \
+    --task Isaac-Ant-Final-Eval-v0 \
+    --seed 24 \
+    --num_envs 1 \
+    --checkpoint logs/rsl_rl/ant_rough/2026-10-05_15-55-59_fin_smooth/model_999.pt \
+    --video \
+    --video_length 960
+
+# 조교 평가용 새 지형 적용 방법:
+#   ant_rough_env_cfg.py 의 AntFinalEvalEnvCfg.__post_init__ 에서
+#   self.scene.terrain.terrain_generator (TerrainGeneratorCfg) 와
+#   self.scene.terrain.physics_material.static_friction / dynamic_friction 만 바꾸면 됩니다.
+#   평지는 terrain_type="plane", terrain_generator=None (또는 Isaac-Ant-Final-Flat-v0 의 terrain_friction).
+#
+# 다른 자체 평가 태스크 (모두 원본 보상 기준):
+#   Isaac-Ant-Unseen2-Scan-Hist-v0 (held-out A), Isaac-Ant-Grid-Scan-Hist-v0 (조교 예시형 격자 상자),
+#   Isaac-Ant-Grid-Scan-Slippery-Hist-v0 (격자 상자, 마찰 0.3),
+#   Isaac-Ant-Stress-Friction01-v0 / -Friction20-v0 / -Bouncy-v0 / -Yaw-v0 (held-out B 스트레스)
+
+# 5) 학습 재현 (RTX 6000 Ada 단독 실행 기준 약 25분)
+./isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/train.py \
+    --task Isaac-Ant-Final-Train-Smooth-v0 --headless --seed 42 --max_iterations 1000 --run_name fin_smooth

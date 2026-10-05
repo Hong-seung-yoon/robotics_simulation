@@ -1,0 +1,19 @@
+# Training outputs: only the submitted checkpoint and the baseline are tracked
+logs/*
+!logs/rsl_rl/
+logs/rsl_rl/*
+!logs/rsl_rl/ant_rough/
+logs/rsl_rl/ant_rough/*
+!logs/rsl_rl/ant_rough/2026-10-05_15-55-59_fin_smooth/
+logs/rsl_rl/ant_rough/2026-10-05_15-55-59_fin_smooth/*
+!logs/rsl_rl/ant_rough/2026-10-05_15-55-59_fin_smooth/model_999.pt
+!logs/rsl_rl/ant_rough/2026-10-05_15-55-59_fin_smooth/params/
+!logs/rsl_rl/ant/
+logs/rsl_rl/ant/*
+!logs/rsl_rl/ant/2026-09-29_14-04-30_ant_baseline/
+logs/rsl_rl/ant/2026-09-29_14-04-30_ant_baseline/*
+!logs/rsl_rl/ant/2026-09-29_14-04-30_ant_baseline/model_999.pt
+!logs/rsl_rl/ant/2026-09-29_14-04-30_ant_baseline/params/
+outputs/
+__pycache__/
+*.pyc
