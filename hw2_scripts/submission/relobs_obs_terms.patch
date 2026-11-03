@@ -1,0 +1,50 @@
+--- a/source/isaaclab_tasks/isaaclab_tasks/manager_based/manipulation/place/mdp/observations.py	2026-10-31 21:58:35.811205934 +0900
++++ b/source/isaaclab_tasks/isaaclab_tasks/manager_based/manipulation/place/mdp/observations.py	2026-10-31 21:58:35.813205908 +0900
+@@ -116,3 +116,30 @@
+             raise ValueError("No gripper_joint_names found in environment config")
+ 
+     return grasped
++
++
++def eef_to_object_in_base_frame(
++    env: ManagerBasedRLEnv,
++    object_cfg: SceneEntityCfg = SceneEntityCfg("toy_truck"),
++    ee_frame_cfg: SceneEntityCfg = SceneEntityCfg("ee_frame"),
++    robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
++) -> torch.Tensor:
++    """Vector from the end effector to the object, in the robot base frame (object_pos - eef_pos)."""
++    ee_frame: FrameTransformer = env.scene[ee_frame_cfg.name]
++    robot: Articulation = env.scene[robot_cfg.name]
++    ee_pos_base, _ = math_utils.subtract_frame_transforms(
++        robot.data.root_pos_w, robot.data.root_quat_w, ee_frame.data.target_pos_w[:, 0, :], ee_frame.data.target_quat_w[:, 0, :]
++    )
++    return object_poses_in_base_frame(env, object_cfg, robot_cfg, return_key="pos") - ee_pos_base
++
++
++def object_to_object_in_base_frame(
++    env: ManagerBasedRLEnv,
++    from_cfg: SceneEntityCfg = SceneEntityCfg("toy_truck"),
++    to_cfg: SceneEntityCfg = SceneEntityCfg("box"),
++    robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
++) -> torch.Tensor:
++    """Vector from one object to another, in the robot base frame (to_pos - from_pos)."""
++    return object_poses_in_base_frame(env, to_cfg, robot_cfg, return_key="pos") - object_poses_in_base_frame(
++        env, from_cfg, robot_cfg, return_key="pos"
++    )
+--- a/source/isaaclab_tasks/isaaclab_tasks/manager_based/manipulation/place/config/agibot/place_toy2box_rmp_rel_env_cfg.py	2026-10-31 21:58:35.812205921 +0900
++++ b/source/isaaclab_tasks/isaaclab_tasks/manager_based/manipulation/place/config/agibot/place_toy2box_rmp_rel_env_cfg.py	2026-10-31 21:58:35.823205780 +0900
+@@ -109,6 +109,14 @@
+         eef_pos = ObsTerm(func=mdp.ee_frame_pose_in_base_frame, params={"return_key": "pos"})
+         eef_quat = ObsTerm(func=mdp.ee_frame_pose_in_base_frame, params={"return_key": "quat"})
+         gripper_pos = ObsTerm(func=mdp.gripper_pos)
++        # hw2: relative-position features (eef -> truck, truck -> box) in the robot base frame
++        eef_to_truck = ObsTerm(
++            func=place_mdp.eef_to_object_in_base_frame, params={"object_cfg": SceneEntityCfg("toy_truck")}
++        )
++        truck_to_box = ObsTerm(
++            func=place_mdp.object_to_object_in_base_frame,
++            params={"from_cfg": SceneEntityCfg("toy_truck"), "to_cfg": SceneEntityCfg("box")},
++        )
+ 
+         def __post_init__(self):
+             self.enable_corruption = False
