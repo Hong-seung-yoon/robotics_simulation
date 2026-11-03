@@ -1,0 +1,14 @@
+# 평가 명령어 (제출용 템플릿). <CKPT_101>, <CKPT_111>는 GitHub에 올린 최종 모델 경로로 교체.
+# 저장소 루트에서, conda env 활성화 후 실행.
+
+# seed 101 모델
+PYTHONUNBUFFERED=1 ./isaaclab.sh -p scripts/imitation_learning/robomimic/play.py \
+  --task Isaac-Place-Toy2Box-Agibot-Right-Arm-RmpFlow-v0 \
+  --checkpoint <CKPT_101> \
+  --headless --seed 42 --num_rollouts 100 --horizon 800
+
+# seed 111 모델
+PYTHONUNBUFFERED=1 ./isaaclab.sh -p scripts/imitation_learning/robomimic/play.py \
+  --task Isaac-Place-Toy2Box-Agibot-Right-Arm-RmpFlow-v0 \
+  --checkpoint <CKPT_111> \
+  --headless --seed 42 --num_rollouts 100 --horizon 800
